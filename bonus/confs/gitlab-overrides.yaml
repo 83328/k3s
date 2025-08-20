@@ -1,0 +1,18 @@
+# Force "localhost" externally and keep TLS/cert-manager off
+global:
+  hosts:
+    gitlab:
+      name: localhost
+      https: false
+    https: false
+  ingress:
+    configureCertmanager: false
+    tls:
+      enabled: false
+  minio:
+    enabled: true
+
+installCertmanager: false
+certmanager-issuer:
+  enabled: false
+  email: admin@example.com

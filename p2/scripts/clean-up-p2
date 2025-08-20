@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+# Verzeichnis, in dem das Skript liegt
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+VAGRANT_DIR="$PROJECT_DIR/infra"
+
+APP_DOMAINS=("app1.com" "app2.com" "app3.com")
+
+cd "$VAGRANT_DIR" && vagrant destroy -f
+cd "$VAGRANT_DIR" && rm -rf .vagrant ../token ../server-ip hosts_patch
+
+echo "Removing entry from /etc/hosts (if exists)..."
+for domain in "${APP_DOMAINS[@]}"; do
+    if grep -q "$domain" /etc/hosts; then
+        sudo sed -i "/$domain/d" /etc/hosts
+        echo "[INFO] Removed $domain from /etc/hosts"
+    else
+        echo "[INFO] No entry for $domain in /etc/hosts"
+    fi
+done

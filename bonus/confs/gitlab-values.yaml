@@ -1,0 +1,23 @@
+global:
+  minio:
+    enabled: true
+gitlab:
+  webservice:
+    minReplicas: 1
+    maxReplicas: 1
+  sidekiq:
+    replicas: 1
+  gitlab-shell:
+    minReplicas: 1
+    maxReplicas: 1
+
+nginx-ingress:
+  enabled: false
+registry:
+  enabled: false
+prometheus:
+  install: false
+postgresql:
+  install: true
+redis:
+  install: true

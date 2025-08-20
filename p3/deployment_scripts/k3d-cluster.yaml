@@ -1,0 +1,16 @@
+apiVersion: k3d.io/v1alpha5
+kind: Simple
+metadata:
+  name: iot-cluster
+servers: 1
+agents: 1
+ports:
+  - port: 8888:80
+    nodeFilters:
+      - loadbalancer   # Leitet Playground-Service nach außen auf Port 8888
+options:
+  k3s:
+    extraArgs:
+      - arg: --disable=traefik   # Wir nutzen Argo CD, kein eingebautes Traefik
+        nodeFilters:
+          - server:*

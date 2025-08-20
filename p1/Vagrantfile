@@ -1,0 +1,29 @@
+Vagrant.configure("2") do |config|
+  config.vm.box = "generic/alpine319"
+
+  config.vm.provider "virtualbox" do |vb|
+    vb.memory = 2048
+    vb.cpus = 1
+  end
+
+  # Shared synced folder
+  config.vm.synced_folder ".", "/vagrant/shared", create: true
+
+  # Server Node
+  config.vm.define "ohoroS" do |server|
+    server.vm.hostname = "ohoroS"
+    # Private network should be the second interface (eth1)
+    server.vm.network "private_network", ip: "192.168.56.110"
+    # NAT for internet (eth0)
+    server.vm.network "public_network", auto_config: true
+    server.vm.provision "shell", path: "scripts/server.sh"
+  end
+
+  # Worker Node
+  config.vm.define "ohoroSW" do |worker|
+    worker.vm.hostname = "ohoroSW"
+    worker.vm.network "private_network", ip: "192.168.56.111"
+    worker.vm.network "public_network", auto_config: true
+    worker.vm.provision "shell", path: "scripts/worker.sh"
+  end
+end

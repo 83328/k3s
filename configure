@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+
+# This script attempts to provision a Ubuntu VM to act as a Vagrant/VirtualBox host
+# for nested virtualization.
+#
+# IMPORTANT:
+# 1. Your PHYSICAL host's CPU must support virtualization (VT-x/AMD-V) and it must be enabled in its BIOS/UEFI.
+# 2. You MUST enable "Nested VT-x/AMD-V" for THIS VM in your VirtualBox Manager
+#    (on your physical host).
+# 3. Performance for nested VMs will likely be significantly degraded.
+# 4. This script assumes you are running it inside the Ubuntu VM.
+
+echo "Starting provisioning for nested VirtualBox and Vagrant..."
+
+# --- 1. Update and install common dependencies ---
+echo "1. Updating package lists and installing common dependencies..."
+
+# sudo apt update && sudo apt upgrade -y
+sudo apt install -y curl
+sudo apt install vim jq
+sudo apt-get install virtualbox
+sudo apt update && sudo apt install vagrant
+
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+rm kubectl
+
+if ! command -v docker >/dev/null 2>&1; then 
+  echo "[INFO] Docker not found. Installing..."; 
+  sudo apt install -y docker.io
+  sudo systemctl enable --now docker
+  sudo usermod -aG docker $USER
+else 
+  echo "[INFO] Docker is already installed."; 
+fi
+
+if ! command -v k3d >/dev/null 2>&1; then
+  echo "[INFO] k3d not found. Installing..."
+  curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
+else
+  echo "[INFO] k3d is already installed."
+fi
+
+if command -v ufw >/dev/null 2>&1; then
+  sudo ufw disable
+fi
+
+if ! git config --file .gitmodules --get-regexp "submodule.p3.path" >/dev/null 2>&1; then
+  git submodule add git@github.com:multitudes/lbrusa42-IoT-Playground.git p3
+else
+  echo "Submodule 'p3' already exists, skipping add."
+fi
+git submodule update --init --remote p3
+
+if ! command -v helm &>/dev/null; then
+  log "Installing Helm..."
+  curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+fi
+
+# add execute permissions to the scripts in p1, p2 and p3
+chmod +x config-aliases
+chmod +x p1/script/start-up-p1
+chmod +x p1/script/clean-up-p1
+chmod +x p2/script/start-up-p2
+chmod +x p2/script/clean-up-p2
+chmod +x p3/deployment_scripts/start.sh
+chmod +x p3/deployment_scripts/delete.sh
+
+echo "==> All dependencies installed successfully!"
+echo "reset the machine to apply changes"
+
+
+
